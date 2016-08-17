@@ -1,0 +1,37 @@
+#auto make files
+/autom4te.cache/
+.deps
+compile
+depcomp
+missing
+install-sh
+stamp-h1
+aclocal.m4
+autoscan.log
+configure
+configure.scan
+config.h.in
+config.h
+config.log
+config.status
+Makefile
+Makefile.am-e
+Makefile.in
+
+#tmp file
+*.swp
+
+#compile object
+*.o
+src/broker
+broker/bin/broker
+dump.rdb
+*.tar
+.DS_Store
+
+
+#ctags and cscope
+cscope.in.out
+cscope.out
+cscope.po.out
+tags

@@ -1,0 +1,20 @@
+mqtt broker 
+
+#make:
+    编译: sh ./build.sh
+    清除编译: sh ./build.sh clean
+    安装所需文件: ./broker
+
+#run:
+    ./broker -c [配置文件位置]
+    配置文件参考: ./config.conf
+
+
+#特点:
+    精简mqtt，qos = 0
+    适用于低延迟，但能容忍消息丢失的场景，例如： 弹幕/聊天室等
+
+
+#Author: 于家鹏 616508150@qq.com
+
+

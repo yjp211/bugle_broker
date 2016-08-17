@@ -1,0 +1,103 @@
+#第一版设计
+struct:
+    //连接信息结构体
+    struct conn_context {
+        int socket_fd;  //连接socket
+        char *user_name;
+        char *passwd;
+        char *address;
+        int is_auth; //是否已认证
+        int can_pub; //有发布权限
+    }
+
+    //认证通过的、有效的订阅端连接
+    struct valid_conn {
+        sturuct conn_context *conn;
+        struct valid_conn *next;
+    }
+
+
+    struct topic {
+        char *name;
+        int sub_client_count; //此topic订阅端数量
+        start sub_child  *sub_client_head; //订阅端链表
+    }
+
+    struct sub_child {
+        struct con_context *conn;
+        struct sub_child *next;
+    }
+
+global value:
+    var struct conn_context *g_valid_conn_head;
+    var int g_valid_conn_count；
+
+    var struct topic *g_topic_head;
+    var int g_topic_count;
+
+main:
+    初始g_valid_conn_head = null, g_valid_conn_count=0, g_topic_head = null, g_topic_count=0
+    bind, listen
+    建立accept循环事件:
+        accept一个新连接
+        初始con_text
+        将端口read事件绑定到reve_callback
+
+reve_callback:
+    mqtt协议分析解析，填充head和body，
+    取出head中的command参数，根据command进一步进入到相关的处理分支
+
+auth_handle
+    pub端和sub端username事先认为的区分，如果是pub端用户，额外验证IP白名单。
+        sub端认证通过后将is_auth置为1，将该连接追加到g_valid_conn_head->next, g_valid_conn_count++。
+            同时启动一个工作线程通知controler记录用户和连接信息。
+        pub端认证通过后将is_auth置为1，can_pub置为1。
+    其他操作必须在认证之后才允许进行。
+
+sub_handle
+    如果是新的topic:
+        初始化topic，topic->sub_client_head = null， topic->sub_client_count =0,
+        g_topic_head->next = topic, g_topic_count++`
+        将此连接追加到topic->suc_client_head->next->conn, topic->sub_client_count++
+        ///为了适应我们的业务，如果订阅的是priveatexxxxxxx，忽略掉此topic
+    else:
+        遍历g_topic_head找到topic，追加此连接到topic->sub_client_head->next->con，topic->sub_client_count++
+
+cancle_sub_handle
+    遍历g_topic_head，找到topic，遍历topic->sub_client_head找到此连接，移除此连接
+    如果此连接是最后一个连接，移除该topic
+
+pub_handle
+    遍历g_topic_head找到topic
+    client = topic->sub_client_head->next
+    while client != null:
+        fd = client->conn->fd
+        write(fd, msg)
+        client = client->next
+
+
+
+#开发计划 
+##第一周 0113-0118
+    熟悉现有推送系，调研推送实现方案。
+##第二周 0119-0125
+    调研开源mqtt推送实现。初步制定实现方案:
+    将推送核心进一步分为三个模块borker、status cache、controler。
+##第三、四周 0126-0208
+    基于libevent实现broker demo
+    进一步明细模块边界，设计数据结构和通信方式
+##第五周 0209-0213
+    实现status cache demo
+##第六周 0216-022
+    实现controler demo
+##第7周  0223-0301
+    完善认证、检查等边界状况
+    模块互联调试
+##第8周  0302-0308
+    和中间件联调
+##第9周  0309-0315
+    编写测试脚本，压力测试
+##第10-11周 0316-0329
+    调优、优化线程模型等
+--------------
+说明：消息第三期立项是将交付期定在4月底，上面的开发计划只排到3月底，但没有去除假期时间，加上春假和个人额外的请假总共会有大概两周时间。
